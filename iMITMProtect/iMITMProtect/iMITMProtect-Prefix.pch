@@ -1,0 +1,14 @@
+//
+// Prefix header for all source files of the 'iMITMProtect' target in the 'iMITMProtect' project
+//
+
+#ifdef __OBJC__
+    #import <Cocoa/Cocoa.h>
+
+    #define APP_NAME "iMITMProtect"
+    #define DB_DIR_REL "Library/Application Support/" APP_NAME
+    #define DB_FILE "database.db"
+
+    #define DB_PATH_REL DB_DIR_REL "/" DB_FILE
+
+#endif
