@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VariablesViewState
+   version = "1.0">
+   <ContextStates>
+      <ContextState
+         contextName = "abstractCrypto::toHexString(unsigned char const*, char*, unsigned long):abstractCrypto.h">
+         <PersistentStrings>
+            <PersistentString
+               value = "binary[i]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+   </ContextStates>
+</VariablesViewState>
