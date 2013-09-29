@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>NSRunningFromLaunchd</key>
+		<string>1</string>
+		<key>DYLD_INSERT_LIBRARIES</key>
+		<string>/var/root/override.dylib</string>
+	</dict>
+	<key>JetsamProperties</key>
+	<dict>
+		<key>JetsamMemoryLimit</key>
+		<integer>3000</integer>
+	</dict>
+	<key>KeepAlive</key>
+	<dict>
+		<key>SuccessfulExit</key>
+		<false/>
+	</dict>
+	<key>Label</key>
+	<string>com.apple.imagent</string>
+	<key>MachServices</key>
+	<dict>
+		<key>com.apple.imagent.embedded.auth</key>
+		<true/>
+	</dict>
+	<key>POSIXSpawnType</key>
+	<string>Interactive</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/System/Library/PrivateFrameworks/IMCore.framework/imagent.app/imagent</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>UserName</key>
+	<string>mobile</string>
+	<key>WorkingDirectory</key>
+	<string>/tmp</string>
+</dict>
+</plist>
