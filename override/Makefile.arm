@@ -27,5 +27,6 @@ all: override.dylib
 
 override.dylib: override.m Makefile.arm
 	$(GCC_ARM) $(LDFLAGS) -lsqlite3 -dynamiclib -o override.dylib override.m -Wall -Wno-parentheses -miphoneos-version-min=7.0 -Wl,-ios_version_min,7.0
+	codesign -fs "iPhone Developer:" override.dylib
 clean:
 	rm -f override.dylib
