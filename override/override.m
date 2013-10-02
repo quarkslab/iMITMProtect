@@ -11,7 +11,7 @@
         __attribute__((used)) static struct{ const void* replacement; const void* replacee; } _interpose_##_replacee \
         __attribute__ ((section ("__DATA,__interpose"))) = { (const void*)(unsigned long)&_replacement, (const void*)(unsigned long)&_replacee };
 
-#ifndef __arm__
+#ifndef TARGET_OS_IPHONE
 #include "interpose.h"
 #include <xpc/xpc.h>
 #else
@@ -32,7 +32,7 @@ extern void xpc_dictionary_set_data(xpc_object_t dictionary, const char *key, co
 #define DB_PATH_REL DB_DIR_REL "/" DB_FILE
 
 void send_notification(NSString* title, NSString* text) {
-#ifndef __arm__
+#ifndef TARGET_OS_IPHONE
 	NSUserNotification *notification = [[NSUserNotification alloc] init];
 	notification.title = title;
 	notification.informativeText = text;
@@ -195,7 +195,7 @@ const void *my_xpc_dictionary_get_data(xpc_object_t dictionary, const char *key,
 DYLD_INTERPOSE(my_xpc_dictionary_set_data, xpc_dictionary_set_data)
 DYLD_INTERPOSE(my_xpc_dictionary_get_data, xpc_dictionary_get_data)
 
-#ifndef __arm__
+#ifndef TARGET_OS_IPHONE
 __attribute__((constructor)) void init() {
 	interpose("_xpc_dictionary_set_data", my_xpc_dictionary_set_data);
 	interpose("_xpc_dictionary_get_data", my_xpc_dictionary_get_data); 

@@ -12,4 +12,4 @@ tester: tester.c inject.c inject.h Makefile
 	$(GCC) -sectcreate __TEXT __info_plist ./Info.plist -O3 -g3 -o tester tester.c inject.c -Wall -Wno-parentheses
 	codesign -s "Mac Developer:" tester
 clean:
-	rm -f tester override.dylib
+	rm -rf tester tester.dSYM override.dylib
