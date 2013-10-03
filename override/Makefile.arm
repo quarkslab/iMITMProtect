@@ -7,9 +7,7 @@ ROOT := $(realpath $(shell dirname $(lastword $(MAKEFILE_LIST))))
 # the sdk, that would be under SDKs in the toolchain location.
 # ex. ./sdk -> /Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS4.2.sdk/
 SYSROOT = $(ROOT)/sdk
-
-GCC_BIN = /Applications/Xcode.app/Contents/Developer/usr/bin/gcc
-
+GCC_BIN=`xcrun -f --sdk $(SYSROOT) gcc`
 
 ARCH_FLAGS=-arch armv7 -arch arm64
 LDFLAGS	=\
