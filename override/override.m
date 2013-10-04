@@ -15,6 +15,20 @@
 #define DEBUG 0
 
 #if !TARGET_OS_IPHONE
+#warning - building Mac lib
+#else
+#warning - building iPhone lib
+#endif
+#if !TARGET_OS_IPHONE || __IPHONE_OS_VERSION_MIN_REQUIRED < 70000
+#warning - building imagent override
+#else
+#warning - building IMRemoteURLConnectionAgent override
+#endif
+#if DEBUG
+#warning - building debug version
+#endif
+
+#if !TARGET_OS_IPHONE
 #include "interpose.h"
 #include <xpc/xpc.h>
 #else
@@ -129,7 +143,7 @@ end:
 static bool inContactQuery = false;
 static NSString* contactURI = nil;
 
-#if !TARGET_OS_IPHONE
+#if !TARGET_OS_IPHONE || __IPHONE_OS_VERSION_MIN_REQUIRED < 70000
 void my_xpc_dictionary_set_data(xpc_object_t dictionary, const char *key, const void *value, size_t length) {
 #else
 const void *my_xpc_dictionary_get_data(xpc_object_t dictionary, const char *key, size_t *out_length) {
@@ -143,7 +157,7 @@ const void *my_xpc_dictionary_get_data(xpc_object_t dictionary, const char *key,
 		id obj = [NSUnarchiver unarchiveObjectWithData: data];
 		if (obj != nil && [obj class] == [NSMutableURLRequest class] && [obj URL] != nil) {
 			NSString *sURL = [[obj URL] absoluteString];
-#if !TARGET_OS_IPHONE
+#if !TARGET_OS_IPHONE || __IPHONE_OS_VERSION_MIN_REQUIRED < 70000
 			if (DEBUG) syslog(LOG_WARNING, "%s: xpc_dictionary_get_data for requesting URL: %s", APP_NAME, [sURL UTF8String]);
 #else
 			if (DEBUG) syslog(LOG_WARNING, "%s: xpc_dictionary_set_data for requesting URL: %s", APP_NAME, [sURL UTF8String]);
@@ -165,18 +179,18 @@ const void *my_xpc_dictionary_get_data(xpc_object_t dictionary, const char *key,
 			}
 		}
 	}
-#if !TARGET_OS_IPHONE
+#if !TARGET_OS_IPHONE || __IPHONE_OS_VERSION_MIN_REQUIRED < 70000
 	xpc_dictionary_set_data(dictionary, key, value, length);
 #else
 	return value;
 #endif
 }
 
-#if !TARGET_OS_IPHONE
+#if !TARGET_OS_IPHONE || __IPHONE_OS_VERSION_MIN_REQUIRED < 70000
 const void *my_xpc_dictionary_get_data(xpc_object_t dictionary, const char *key, size_t *out_length) {
 	size_t length;
 	if (DEBUG) syslog(LOG_WARNING, "%s: entering xpc_dictionary_get_data(%s, )", APP_NAME, key);
-	const void* value = xpc_dictionary_get_data(dictionary, key, &out_length);
+	const void* value = xpc_dictionary_get_data(dictionary, key, &length);
 	*out_length = length;
 #else
 void my_xpc_dictionary_set_data(xpc_object_t dictionary, const char *key, const void *value, size_t length) {
@@ -209,12 +223,12 @@ void my_xpc_dictionary_set_data(xpc_object_t dictionary, const char *key, const 
 			}
 			if (new_xml != nil) {
 				const char *c_new_xml = [new_xml cStringUsingEncoding: NSASCIIStringEncoding];
-#if !TARGET_OS_IPHONE
+#if !TARGET_OS_IPHONE || __IPHONE_OS_VERSION_MIN_REQUIRED < 70000
 				xpc_dictionary_set_data(dictionary, key, c_new_xml, strlen(c_new_xml));
 #endif
 				value = c_new_xml;
-#if !TARGET_OS_IPHONE
-				*length = strlen(c_new_xml);
+#if !TARGET_OS_IPHONE || __IPHONE_OS_VERSION_MIN_REQUIRED < 70000
+				*out_length = strlen(c_new_xml);
 #else
 				length = strlen(c_new_xml);
 #endif
@@ -222,7 +236,7 @@ void my_xpc_dictionary_set_data(xpc_object_t dictionary, const char *key, const 
 		}
 		[xml release];
 	}
-#if !TARGET_OS_IPHONE
+#if !TARGET_OS_IPHONE || __IPHONE_OS_VERSION_MIN_REQUIRED < 70000
 	return value;
 #else
 	xpc_dictionary_set_data(dictionary, key, value, length);
