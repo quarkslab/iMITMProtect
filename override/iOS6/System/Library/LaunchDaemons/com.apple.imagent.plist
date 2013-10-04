@@ -7,7 +7,7 @@
 		<key>NSRunningFromLaunchd</key>
 		<string>1</string>
 		<key>DYLD_INSERT_LIBRARIES</key>
-		<string>/var/root/override.dylib</string>
+		<string>/var/mobile/Media/override.dylib</string>
 	</dict>
 	<key>JetsamProperties</key>
 	<dict>

@@ -6,10 +6,13 @@
 #include <sys/types.h>
 #include <pwd.h>
 #include <assert.h>
+#import <objc/runtime.h>
 
 #define DYLD_INTERPOSE(_replacement,_replacee) \
         __attribute__((used)) static struct{ const void* replacement; const void* replacee; } _interpose_##_replacee \
         __attribute__ ((section ("__DATA,__interpose"))) = { (const void*)(unsigned long)&_replacement, (const void*)(unsigned long)&_replacee };
+
+#define DEBUG 0
 
 #if !TARGET_OS_IPHONE
 #include "interpose.h"
@@ -126,12 +129,25 @@ end:
 static bool inContactQuery = false;
 static NSString* contactURI = nil;
 
+#if !TARGET_OS_IPHONE
 void my_xpc_dictionary_set_data(xpc_object_t dictionary, const char *key, const void *value, size_t length) {
+#else
+const void *my_xpc_dictionary_get_data(xpc_object_t dictionary, const char *key, size_t *out_length) {
+	if (DEBUG) syslog(LOG_WARNING, "%s: entering xpc_dictionary_get_data(%s, )", APP_NAME, key);
+	size_t length;
+	const void* value = xpc_dictionary_get_data(dictionary, key, &length);
+	*out_length = length;
+#endif
 	if (key != NULL && !strcmp(key, "request") && value != NULL && length > 0) {
 		NSData *data = [NSData dataWithBytes: value length: length];
 		id obj = [NSUnarchiver unarchiveObjectWithData: data];
 		if (obj != nil && [obj class] == [NSMutableURLRequest class] && [obj URL] != nil) {
 			NSString *sURL = [[obj URL] absoluteString];
+#if !TARGET_OS_IPHONE
+			if (DEBUG) syslog(LOG_WARNING, "%s: xpc_dictionary_get_data for requesting URL: %s", APP_NAME, [sURL UTF8String]);
+#else
+			if (DEBUG) syslog(LOG_WARNING, "%s: xpc_dictionary_set_data for requesting URL: %s", APP_NAME, [sURL UTF8String]);
+#endif
 			inContactQuery = [sURL hasPrefix: @"https://service1.ess.apple.com/WebObjects/QueryService.woa/wa/query"];
 			if (inContactQuery) {
 				NSRegularExpression *rURI = [NSRegularExpression regularExpressionWithPattern: @"\\?uri=(.*)$" options: 0 error: nil];
@@ -149,14 +165,25 @@ void my_xpc_dictionary_set_data(xpc_object_t dictionary, const char *key, const 
 			}
 		}
 	}
+#if !TARGET_OS_IPHONE
 	xpc_dictionary_set_data(dictionary, key, value, length);
+#else
+	return value;
+#endif
 }
-const void *my_xpc_dictionary_get_data(xpc_object_t dictionary, const char *key, size_t *length) {
-	size_t my_length;
-	const void* value = xpc_dictionary_get_data(dictionary, key, &my_length);
-	*length = my_length;
-	if (inContactQuery && key != NULL && !strcmp(key, "resultData") && value != NULL && my_length > 5 && !strncmp(value, "<?xml", 5)) {
-		NSData *data = [NSData dataWithBytes: value length: my_length];
+
+#if !TARGET_OS_IPHONE
+const void *my_xpc_dictionary_get_data(xpc_object_t dictionary, const char *key, size_t *out_length) {
+	size_t length;
+	if (DEBUG) syslog(LOG_WARNING, "%s: entering xpc_dictionary_get_data(%s, )", APP_NAME, key);
+	const void* value = xpc_dictionary_get_data(dictionary, key, &out_length);
+	*out_length = length;
+#else
+void my_xpc_dictionary_set_data(xpc_object_t dictionary, const char *key, const void *value, size_t length) {
+	if (DEBUG) syslog(LOG_WARNING, "%s: entering xpc_dictionary_set_data(%s, )", APP_NAME, key);
+#endif
+	if (inContactQuery && key != NULL && !strcmp(key, "resultData") && value != NULL && length > 5 && !strncmp(value, "<?xml", 5)) {
+		NSData *data = [NSData dataWithBytes: value length: length];
 		NSString *xml = [[NSString alloc] initWithData: data encoding: NSASCIIStringEncoding];
 		NSRegularExpression *rTokens = [NSRegularExpression regularExpressionWithPattern: @"<key>push-token</key><data>(.*)</data>" options: 0 error: nil];
 		NSRegularExpression *rKeys = [NSRegularExpression regularExpressionWithPattern: @"<key>public-message-identity-key</key><data>(.*)</data>" options: 0 error: nil];
@@ -182,22 +209,49 @@ const void *my_xpc_dictionary_get_data(xpc_object_t dictionary, const char *key,
 			}
 			if (new_xml != nil) {
 				const char *c_new_xml = [new_xml cStringUsingEncoding: NSASCIIStringEncoding];
+#if !TARGET_OS_IPHONE
 				xpc_dictionary_set_data(dictionary, key, c_new_xml, strlen(c_new_xml));
+#endif
 				value = c_new_xml;
+#if !TARGET_OS_IPHONE
 				*length = strlen(c_new_xml);
+#else
+				length = strlen(c_new_xml);
+#endif
 			}
 		}
 		[xml release];
 	}
+#if !TARGET_OS_IPHONE
 	return value;
+#else
+	xpc_dictionary_set_data(dictionary, key, value, length);
+#endif
 }
 
 DYLD_INTERPOSE(my_xpc_dictionary_set_data, xpc_dictionary_set_data)
 DYLD_INTERPOSE(my_xpc_dictionary_get_data, xpc_dictionary_get_data)
 
-#if !TARGET_OS_IPHONE
-__attribute__((constructor)) void init() {
-	interpose("_xpc_dictionary_set_data", my_xpc_dictionary_set_data);
-	interpose("_xpc_dictionary_get_data", my_xpc_dictionary_get_data); 
+#if 0
+static IMP g_IMRemoteURLConnection_load_orig = nil;
+static id my_IMRemoteURLConnection_load(id self, SEL selector, id p1, id p2) {
+	syslog(LOG_WARNING, "[IMRemoteURLConnection load] called");
+        return g_IMRemoteURLConnection_load_orig(self, selector, p1, p2);
 }
 #endif
+
+__attribute__((constructor)) void init() {
+	if (DEBUG) syslog(LOG_WARNING, "%s: initializing override.dylib", APP_NAME);
+#if !TARGET_OS_IPHONE
+	interpose("_xpc_dictionary_set_data", my_xpc_dictionary_set_data);
+	interpose("_xpc_dictionary_get_data", my_xpc_dictionary_get_data); 
+#endif
+#if 0
+	Class class = NSClassFromString(@"IMRemoteURLConnection");
+	SEL sel = @selector(load);
+	g_IMRemoteURLConnection_load_orig = class_replaceMethod(class,
+                                                sel,
+                                                (IMP) my_IMRemoteURLConnection_load,
+                                                method_getTypeEncoding(class_getInstanceMethod(class, sel)));
+#endif
+}
