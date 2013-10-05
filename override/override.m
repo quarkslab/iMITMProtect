@@ -12,7 +12,7 @@
         __attribute__((used)) static struct{ const void* replacement; const void* replacee; } _interpose_##_replacee \
         __attribute__ ((section ("__DATA,__interpose"))) = { (const void*)(unsigned long)&_replacement, (const void*)(unsigned long)&_replacee };
 
-#define DEBUG 0
+#define DEBUG 1
 
 #if !TARGET_OS_IPHONE
 #warning - building Mac lib
@@ -41,6 +41,8 @@
 extern const void* xpc_dictionary_get_data(xpc_object_t dictionary, const char *key, size_t *length);
 extern void xpc_dictionary_set_data(xpc_object_t dictionary, const char *key, const void *value, size_t length);
 #endif
+
+extern void* IMDMessageRecordCopyNewestUnreadIncomingMessagesToLimitAfterRowID(void* r0, void* r1);
 
 #define APP_NAME "iMITMProtect"
 #define DB_DIR_REL "Library/Application Support/" APP_NAME
@@ -243,8 +245,18 @@ void my_xpc_dictionary_set_data(xpc_object_t dictionary, const char *key, const 
 #endif
 }
 
+void* my_IMDMessageRecordCopyNewestUnreadIncomingMessagesToLimitAfterRowID(void* r0, void* r1) {
+	syslog(LOG_WARNING, "entering IMDMessageRecordCopyNewestUnreadIncomingMessagesToLimitAfterRowID(%p, %p)", r0, r1);
+	void* ret = IMDMessageRecordCopyNewestUnreadIncomingMessagesToLimitAfterRowID(r0, r1);
+	syslog(LOG_WARNING, "exiting IMDMessageRecordCopyNewestUnreadIncomingMessagesToLimitAfterRowID(%p, %p) return value=%p", r0, r1, ret);
+	return ret;
+}
+
 DYLD_INTERPOSE(my_xpc_dictionary_set_data, xpc_dictionary_set_data)
 DYLD_INTERPOSE(my_xpc_dictionary_get_data, xpc_dictionary_get_data)
+
+DYLD_INTERPOSE(my_IMDMessageRecordCopyNewestUnreadIncomingMessagesToLimitAfterRowID, IMDMessageRecordCopyNewestUnreadIncomingMessagesToLimitAfterRowID)
+//_IMDMessageRecordCopyNewestUnreadIncomingMessagesToLimitAfterRowID
 
 #if 0
 static IMP g_IMRemoteURLConnection_load_orig = nil;
@@ -256,6 +268,7 @@ static id my_IMRemoteURLConnection_load(id self, SEL selector, id p1, id p2) {
 
 __attribute__((constructor)) void init() {
 	if (DEBUG) syslog(LOG_WARNING, "%s: initializing override.dylib", APP_NAME);
+	interpose("_IMDMessageRecordCopyNewestUnreadIncomingMessagesToLimitAfterRowID", my_IMDMessageRecordCopyNewestUnreadIncomingMessagesToLimitAfterRowID);
 #if !TARGET_OS_IPHONE
 	interpose("_xpc_dictionary_set_data", my_xpc_dictionary_set_data);
 	interpose("_xpc_dictionary_get_data", my_xpc_dictionary_get_data); 
