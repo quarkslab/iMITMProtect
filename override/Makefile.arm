@@ -9,13 +9,15 @@ ROOT := $(realpath $(shell dirname $(lastword $(MAKEFILE_LIST))))
 SYSROOT = $(ROOT)/sdk
 GCC_BIN=`xcrun -f --sdk $(SYSROOT) gcc`
 
-ARCH_FLAGS=-arch armv7 -arch arm64
+#ARCH_FLAGS=-arch armv7 -arch arm64
+ARCH_FLAGS=-arch armv7
 LDFLAGS	=\
 	-I.\
 	-F./sdk/System/Library/Frameworks/\
 	-F./sdk/System/Library/PrivateFrameworks/\
 	-framework Foundation\
 	-framework CoreFoundation\
+	-framework IMDPersistence\
 	-lobjc\
 	-bind_at_load
 
