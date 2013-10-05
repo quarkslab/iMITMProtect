@@ -268,8 +268,9 @@ static id my_IMRemoteURLConnection_load(id self, SEL selector, id p1, id p2) {
 
 __attribute__((constructor)) void init() {
 	if (DEBUG) syslog(LOG_WARNING, "%s: initializing override.dylib", APP_NAME);
-	interpose("_IMDMessageRecordCopyNewestUnreadIncomingMessagesToLimitAfterRowID", my_IMDMessageRecordCopyNewestUnreadIncomingMessagesToLimitAfterRowID);
 #if !TARGET_OS_IPHONE
+	syslog(LOG_WARNING, "Interposition of IMDMessageRecordCopyNewestUnreadIncomingMessagesToLimitAfterRowID");
+	interpose("IMDMessageRecordCopyNewestUnreadIncomingMessagesToLimitAfterRowID", my_IMDMessageRecordCopyNewestUnreadIncomingMessagesToLimitAfterRowID);
 	interpose("_xpc_dictionary_set_data", my_xpc_dictionary_set_data);
 	interpose("_xpc_dictionary_get_data", my_xpc_dictionary_get_data); 
 #endif
