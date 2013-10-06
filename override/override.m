@@ -44,6 +44,11 @@ extern void xpc_dictionary_set_data(xpc_object_t dictionary, const char *key, co
 
 extern void* IMDMessageRecordCopyNewestUnreadIncomingMessagesToLimitAfterRowID(void* r0, void* r1);
 
+#define IMDMessageRecordRef void*
+extern IMDMessageRecordRef IMDMessageRecordCopyMessageForGUID(void* r0);
+extern CFStringRef IMDMessageRecordCopyText(CFAllocatorRef alloc, IMDMessageRecordRef message);
+extern void IMDMessageRecordSetText(IMDMessageRecordRef message, CFStringRef text);
+
 #define APP_NAME "iMITMProtect"
 #define DB_DIR_REL "Library/Application Support/" APP_NAME
 #define DB_FILE "database.db"
@@ -252,10 +257,59 @@ void* my_IMDMessageRecordCopyNewestUnreadIncomingMessagesToLimitAfterRowID(void*
 	return ret;
 }
 
+void* my_IMDMessageRecordCopyMessageForGUID(void* r0) {
+	syslog(LOG_WARNING, "entering my_IMDMessageRecordCopyMessageForGUID(%p)", r0);
+
+	{
+	char param[256];
+	memset(param, 0, 256);
+	CFStringGetCString (
+   		(CFStringRef) r0,
+   		param,
+   		256,
+   		kCFStringEncodingUTF8
+	);
+
+	syslog(LOG_WARNING, "parameter is %s", param);
+	}
+
+	IMDMessageRecordRef ret = IMDMessageRecordCopyMessageForGUID(r0);
+	{
+	char param[256];
+	memset(param, 0, 256);
+
+	CFStringRef l = IMDMessageRecordCopyText(CFAllocatorGetDefault(), ret);
+
+	CFStringGetCString (
+   		(CFStringRef) l,
+   		param,
+   		256,
+   		kCFStringEncodingUTF8
+	);
+
+	syslog(LOG_WARNING, "text is %s", param);
+	char newString[1024];
+	sprintf(newString, "Modifié par override : %s", param);
+	CFStringRef text = CFStringCreateWithCString (NULL, newString, kCFStringEncodingUTF8);
+
+	IMDMessageRecordSetText(ret, text);
+	
+	CFRelease(l);
+	CFRelease(text);
+
+	}
+
+	syslog(LOG_WARNING, "exiting my_IMDMessageRecordCopyMessageForGUID(%p) return value=%p", r0, ret);
+	return ret;
+}
+
 DYLD_INTERPOSE(my_xpc_dictionary_set_data, xpc_dictionary_set_data)
 DYLD_INTERPOSE(my_xpc_dictionary_get_data, xpc_dictionary_get_data)
 
 DYLD_INTERPOSE(my_IMDMessageRecordCopyNewestUnreadIncomingMessagesToLimitAfterRowID, IMDMessageRecordCopyNewestUnreadIncomingMessagesToLimitAfterRowID)
+DYLD_INTERPOSE(my_IMDMessageRecordCopyMessageForGUID, IMDMessageRecordCopyMessageForGUID)
+
+
 //_IMDMessageRecordCopyNewestUnreadIncomingMessagesToLimitAfterRowID
 
 #if 0
@@ -270,7 +324,9 @@ __attribute__((constructor)) void init() {
 	if (DEBUG) syslog(LOG_WARNING, "%s: initializing override.dylib", APP_NAME);
 #if !TARGET_OS_IPHONE
 	syslog(LOG_WARNING, "Interposition of IMDMessageRecordCopyNewestUnreadIncomingMessagesToLimitAfterRowID");
-	interpose("IMDMessageRecordCopyNewestUnreadIncomingMessagesToLimitAfterRowID", my_IMDMessageRecordCopyNewestUnreadIncomingMessagesToLimitAfterRowID);
+	interpose("_IMDMessageRecordCopyNewestUnreadIncomingMessagesToLimitAfterRowID", my_IMDMessageRecordCopyNewestUnreadIncomingMessagesToLimitAfterRowID);
+	syslog(LOG_WARNING, "Interposition of IMDMessageRecordCopyMessageForGUID");
+	interpose("_IMDMessageRecordCopyMessageForGUID", my_IMDMessageRecordCopyMessageForGUID);
 	interpose("_xpc_dictionary_set_data", my_xpc_dictionary_set_data);
 	interpose("_xpc_dictionary_get_data", my_xpc_dictionary_get_data); 
 #endif
