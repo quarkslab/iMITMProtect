@@ -261,42 +261,44 @@ void* my_IMDMessageRecordCopyMessageForGUID(void* r0) {
 	syslog(LOG_WARNING, "entering my_IMDMessageRecordCopyMessageForGUID(%p)", r0);
 
 	{
-	char param[256];
-	memset(param, 0, 256);
-	CFStringGetCString (
-   		(CFStringRef) r0,
-   		param,
-   		256,
-   		kCFStringEncodingUTF8
-	);
+		char param[256];
+		memset(param, 0, 256);
+		CFStringGetCString (
+	   		(CFStringRef) r0,
+	   		param,
+	   		256,
+	   		kCFStringEncodingUTF8
+		);
 
-	syslog(LOG_WARNING, "parameter is %s", param);
+		syslog(LOG_WARNING, "parameter is %s", param);
 	}
 
 	IMDMessageRecordRef ret = IMDMessageRecordCopyMessageForGUID(r0);
-	{
-	char param[256];
-	memset(param, 0, 256);
+	if(ret) {
+		char param[256];
+		memset(param, 0, 256);
 
-	CFStringRef l = IMDMessageRecordCopyText(CFAllocatorGetDefault(), ret);
+		CFStringRef l = IMDMessageRecordCopyText(CFAllocatorGetDefault(), ret);
 
-	CFStringGetCString (
-   		(CFStringRef) l,
-   		param,
-   		256,
-   		kCFStringEncodingUTF8
-	);
+		CFStringGetCString (
+	   		(CFStringRef) l,
+	   		param,
+	   		256,
+	   		kCFStringEncodingUTF8
+		);
 
-	syslog(LOG_WARNING, "text is %s", param);
-	char newString[1024];
-	sprintf(newString, "Modifié par override : %s", param);
-	CFStringRef text = CFStringCreateWithCString (NULL, newString, kCFStringEncodingUTF8);
+		syslog(LOG_WARNING, "text is %s", param);
+		char newString[1024];
+		sprintf(newString, "Modifié par override : %s", param);
+		CFStringRef text = CFStringCreateWithCString (NULL, newString, kCFStringEncodingUTF8);
 
-	IMDMessageRecordSetText(ret, text);
-	
-	CFRelease(l);
-	CFRelease(text);
+		IMDMessageRecordSetText(ret, text);
+		
+		CFRelease(l);
+		CFRelease(text);
 
+	} else {
+		syslog(LOG_WARNING, "message is null for this GUID");		
 	}
 
 	syslog(LOG_WARNING, "exiting my_IMDMessageRecordCopyMessageForGUID(%p) return value=%p", r0, ret);
