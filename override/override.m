@@ -22,7 +22,7 @@
 #if !TARGET_OS_IPHONE || __IPHONE_OS_VERSION_MIN_REQUIRED < 70000
 #warning - building imagent override
 #else
-#warning - building IMRemoteURLConnectionAgent override
+#warning - building Prefs_AccountsAgent override
 #endif
 #if DEBUG
 #warning - building debug version
@@ -314,11 +314,11 @@ DYLD_INTERPOSE(my_IMDMessageRecordCopyMessageForGUID, IMDMessageRecordCopyMessag
 
 //_IMDMessageRecordCopyNewestUnreadIncomingMessagesToLimitAfterRowID
 
-#if 0
-static IMP g_IMRemoteURLConnection_load_orig = nil;
-static id my_IMRemoteURLConnection_load(id self, SEL selector, id p1, id p2) {
-	syslog(LOG_WARNING, "[IMRemoteURLConnection load] called");
-        return g_IMRemoteURLConnection_load_orig(self, selector, p1, p2);
+#if 1
+static IMP g_Prefs_Accounts_init_orig = nil;
+static id my_Prefs_Accounts_init(id self, SEL selector, id p1) {
+	syslog(LOG_WARNING, "[Prefs_Accounts init] called");
+        return g_Prefs_Accounts_init_orig(self, selector, p1);
 }
 #endif
 
@@ -332,12 +332,12 @@ __attribute__((constructor)) void init() {
 	interpose("_xpc_dictionary_set_data", my_xpc_dictionary_set_data);
 	interpose("_xpc_dictionary_get_data", my_xpc_dictionary_get_data); 
 #endif
-#if 0
-	Class class = NSClassFromString(@"IMRemoteURLConnection");
-	SEL sel = @selector(load);
-	g_IMRemoteURLConnection_load_orig = class_replaceMethod(class,
+#if 1
+	Class class = NSClassFromString(@"Prefs_Accounts");
+	SEL sel = @selector(init);
+	g_Prefs_Accounts_init_orig = class_replaceMethod(class,
                                                 sel,
-                                                (IMP) my_IMRemoteURLConnection_load,
+                                                (IMP) my_Prefs_Accounts_init,
                                                 method_getTypeEncoding(class_getInstanceMethod(class, sel)));
 #endif
 }
